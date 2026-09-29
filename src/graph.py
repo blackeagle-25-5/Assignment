@@ -1,10 +1,11 @@
 from typing import List, TypedDict
 
 from langgraph.graph import StateGraph, START, END
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_groq import ChatGroq
 from langchain_pinecone import PineconeVectorStore
 
-from src.config import PINECONE_INDEX_NAME
+from src.config import PINECONE_INDEX_NAME, GROQ_API_KEY
 
 
 class AgentState(TypedDict):
@@ -15,8 +16,8 @@ class AgentState(TypedDict):
 
 
 def build_rag_graph():
-    embeddings = OpenAIEmbeddings(
-        model="text-embedding-3-small"
+    embeddings = HuggingFaceEmbeddings(
+        model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
 
     vector_store = PineconeVectorStore(
@@ -28,8 +29,9 @@ def build_rag_graph():
         search_kwargs={"k": 3}
     )
 
-    llm = ChatOpenAI(
-        model="gpt-4o-mini",
+    llm = ChatGroq(
+        api_key=GROQ_API_KEY,
+        model="openai/gpt-oss-20b",
         temperature=0,
     )
 
@@ -49,24 +51,33 @@ def build_rag_graph():
         context = "\n\n".join(state["context"])
 
         prompt = f"""
-You are a strict RAG assistant.
+You are a document-grounded RAG assistant.
 
-Answer the user's question using ONLY the information
-contained in the provided context.
+Your job is to answer the user's question using ONLY
+the retrieved context from the Agentic AI eBook.
 
-If the context does not contain enough information to
-answer the question, say:
+IMPORTANT RULES:
+1. Use the retrieved context as the source of truth.
+2. If the context contains information that answers the
+   question, provide a clear and concise answer.
+3. You may combine information from multiple retrieved
+   chunks when necessary.
+4. Do not use outside knowledge.
+5. Do not invent or assume facts.
+6. If the retrieved context genuinely does not contain
+   enough information to answer the question, respond:
 
 "I cannot answer based on the provided document."
 
-Do not use outside knowledge.
-Do not make up facts.
-
-Context:
+Retrieved context:
+------------------
 {context}
+------------------
 
-Question:
+User question:
 {state["question"]}
+
+Answer:
 """
 
         response = llm.invoke(prompt)

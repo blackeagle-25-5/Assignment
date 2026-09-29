@@ -9,3 +9,4 @@ PINECONE_INDEX_NAME = os.getenv(
     "PINECONE_INDEX_NAME",
     "agentic-ai-index"
 )
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")

@@ -1,6 +1,6 @@
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_openai import OpenAIEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_pinecone import PineconeVectorStore
 
 from src.config import PINECONE_INDEX_NAME
@@ -27,9 +27,9 @@ def split_documents(documents):
 
 
 def create_embeddings():
-    """Create the OpenAI embedding model."""
-    embeddings = OpenAIEmbeddings(
-        model="text-embedding-3-small"
+    """Create the local Hugging Face embedding model."""
+    embeddings = HuggingFaceEmbeddings(
+        model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
 
     return embeddings
@@ -62,11 +62,9 @@ def run_ingestion(pdf_path: str):
     return vector_store
 
 
-
-
 if __name__ == "__main__":
     pdf_path = "data/Ebook-Agentic-AI.pdf"
 
     run_ingestion(pdf_path)
 
-    print("Document ingestion completed successfully.")    
+    print("Document ingestion completed successfully.")
